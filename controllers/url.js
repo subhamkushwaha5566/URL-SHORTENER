@@ -13,21 +13,26 @@ async function handleGenerateNewShortURL(req, res) {
     createdBy: req.user._id,
   });
 
-  return res.render("home", {
-    id: shortID,
-  });
+  return res.status(201).json({ id: shortID });
 }
 
 async function handleGetAnalytics(req, res) {
   const shortId = req.params.shortId;
   const result = await URL.findOne({ shortId });
+  if (!result) return res.status(404).json({ error: "URL not found" });
   return res.json({
     totalClicks: result.visitHistory.length,
     analytics: result.visitHistory,
   });
 }
 
+async function handleGetUserURLs(req, res) {
+  const allurls = await URL.find({ createdBy: req.user._id });
+  return res.json({ urls: allurls });
+}
+
 module.exports = {
   handleGenerateNewShortURL,
   handleGetAnalytics,
+  handleGetUserURLs,
 };

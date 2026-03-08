@@ -4,28 +4,44 @@ const { setUser } = require("../service/auth");
 
 async function handleUserSignup(req, res) {
   const { name, email, password } = req.body;
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
 
-  await User.create({
-    name,
-    email,
-    password,
-  });
-  return res.redirect("/login");
+  try {
+    await User.create({
+      name,
+      email,
+      password,
+    });
+    return res.status(201).json({ success: true, message: "User created" });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+    return res.status(500).json({ error: "Internal server error" });
+  }
 }
 
 async function handleUserLogin(req, res) {
   const { email, password } = req.body;
-  const user = await User.findOne({ email, password });
+  
+  try {
+    const user = await User.findOne({ email, password });
 
-  if (!user)
-    return res.render("login", {
-      error: "Invalid Username or Password",
-    });
+    if (!user) {
+      return res.status(401).json({
+        error: "Invalid Username or Password",
+      });
+    }
 
-  const sessionId = uuidv4();
-  setUser(sessionId, user);
-  res.cookie("uid", sessionId);
-  return res.redirect("/");
+    const sessionId = uuidv4();
+    setUser(sessionId, user);
+    res.cookie("uid", sessionId, { httpOnly: true, path: "/" });
+    return res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: "Internal server error during login" });
+  }
 }
 
 module.exports = {
