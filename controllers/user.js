@@ -37,7 +37,12 @@ async function handleUserLogin(req, res) {
 
     const sessionId = uuidv4();
     setUser(sessionId, user);
-    res.cookie("uid", sessionId, { httpOnly: true, path: "/" });
+    res.cookie("uid", sessionId, { 
+      httpOnly: true, 
+      path: "/",
+      sameSite: "none",
+      secure: true 
+    });
     return res.json({ success: true });
   } catch (error) {
     return res.status(500).json({ error: "Internal server error during login" });
